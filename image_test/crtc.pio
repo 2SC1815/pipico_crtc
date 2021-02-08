@@ -1,0 +1,36 @@
+;
+; Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
+;
+; SPDX-License-Identifier: BSD-3-Clause
+;
+
+; This program has been modified based on the following program:
+; pico-examples/adc/dma_capture/resistor_dac.pio
+
+.program crt_output
+
+    out pins, 5
+
+
+% c-sdk {
+static inline void crt_output_program_init(PIO pio, uint sm, uint offset, uint pin_base) {
+
+    pio_sm_set_pins_with_mask(pio, sm, 0, 0x1fu << pin_base);
+    pio_sm_set_pindirs_with_mask(pio, sm, ~0u, 0x1fu << pin_base);
+
+    for (int i = 0; i < 5; ++i)
+        pio_gpio_init(pio, pin_base + i);
+
+    pio_sm_config c = crt_output_program_get_default_config(offset);
+    sm_config_set_out_pins(&c, pin_base, 5);
+    
+    sm_config_set_out_shift(&c, true, true, 5);
+    
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    sm_config_set_clkdiv(&c, 25.5);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
